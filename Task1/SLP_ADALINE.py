@@ -5,6 +5,9 @@ import seaborn as sns
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import KNNImputer
+import warnings
+warnings.filterwarnings("ignore")
+import streamlit as st
 
 df = pd.read_csv('penguins.csv')
                   #[1, 2, ...]        ['Adelie', ...]
@@ -92,24 +95,7 @@ def SLP_test(X_test, y_test, X0, w0, w1, w2):
               [FN, TN]]
   return accuracy, precision, recall, F1, conf_mat
 
-def visualize(X, y, w0, w1, w2):
 
-    plt.figure(figsize=(7,5))
-    # scatter plot
-    plt.scatter(X[:,0], X[:,1], c=y, cmap='bwr', edgecolors='k')
-    # decision boundary
-    x_vals = np.linspace(X[:,0].min(), X[:,0].max(), 100)
-    y_vals = -(w1/w2)*x_vals - (w0/w2)
-    plt.plot(x_vals, y_vals, color='black', label='Decision Boundary')
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-    plt.title("Perceptron Decision Boundary")
-    plt.legend()
-    plt.show()
-    preds = np.where((w1 * X[:, 0] + w2 * X[:, 1] + w0) >= 0, 1, -1)
-    plot_accuracy = np.mean(preds == y)
-    print("Accuracy calculated from plot side:", plot_accuracy)
-    return
 # ===== Test Case =====
 
 def ADA_train(X_train, y_train, epochs, learning_rate, X0, mse):
@@ -163,6 +149,29 @@ def ADA_test(X_test, y_test, X0, w0, w1, w2):
               [FN, TN]]
   return accuracy, precision, recall, F1, conf_mat
 
+def visualize(X, y, w0, w1, w2, X0):
+
+    plt.figure(figsize=(7,5))
+    plt.scatter(X[:,0], X[:,1], c=y, cmap='bwr', edgecolors='k')
+
+    x1 = (-w0 * X0) / w1
+    x2 = (-w0 * X0) / w2
+    
+    plt.plot([x1, 0], [0, x2], color = 'black', label = 'Decision Boundary')
+
+    #might remove these two lines based on how the graph look
+    #plt.scatter(x1, 0, color = 'black')
+    # plt.scatter(0, x2, color = 'black')
+
+    plt.xlabel("Feature 1 (X1)")
+    plt.ylabel("Feature 2 (X2)")
+    plt.title("Perceptron Decision Boundary")
+    plt.legend()
+    plt.show()
+
+    preds = np.where((w1*X[:,0] + w2*X[:,1] + w0*X0) >= 0, 1, -1)
+    plot_accuracy = np.mean(preds == y)
+    print("Accuracy calculated from plot side:", plot_accuracy)
 
 if __name__ == "__main__":
     # choose 2 numeric features indices and 2 classes from the CSV
@@ -179,4 +188,4 @@ if __name__ == "__main__":
     print("F1 Score :", F1)
     print("Confusion matrix:", conf_mat)
     # verify accuracy visually (this prints the plot accuracy and shows the plot)
-    visualize(X_test, y_test, w0, w1, w2)
+    visualize(X_test, y_test, w0, w1, w2,1)
