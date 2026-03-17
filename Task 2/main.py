@@ -10,7 +10,7 @@ from sklearn.impute import KNNImputer
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
-EPOCHS = 5000
+EPOCHS = 2000
 learning_rate = 0.01
 bias = True
 
@@ -25,18 +25,46 @@ df = pd.read_csv('penguins.csv')
 def preprocessing(df):
     df['Species'] = df['Species'].map({'Adelie': 0, 'Chinstrap': 1, 'Gentoo': 2})
     df['OriginLocation'] = df['OriginLocation'].map({'Torgersen': 0, 'Biscoe': 1, 'Dream': 2})
-    df.dropna(inplace=True)
+
+    df = df.dropna()
+
     X = df.drop('Species', axis=1).values
     y = df['Species'].values
-    #normalize the data
-    scaler = StandardScaler()
-    x = scaler.fit_transform(X)
 
-    return x, y
+    return X, y
+
+
+def stratified_split(X, y):
+    X_train, y_train = [], []
+    X_test, y_test = [], []
+
+    for cls in np.unique(y):
+        idx = np.where(y == cls)[0]
+
+        X_cls = X[idx]
+        y_cls = y[idx]
+
+        # first 30 train, next 20 test
+        X_train.append(X_cls[:30])
+        y_train.append(y_cls[:30])
+
+        X_test.append(X_cls[30:50])
+        y_test.append(y_cls[30:50])
+
+    return (
+        np.vstack(X_train),
+        np.hstack(y_train),
+        np.vstack(X_test),
+        np.hstack(y_test),
+    )
 
 X, y = preprocessing(df)
-print(X.shape)
-print(y.shape) 
+
+X_train, y_train, X_test, y_test = stratified_split(X, y)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
 
 model = MLP(bias)
@@ -51,8 +79,9 @@ for epoch in range(EPOCHS):
 
     optimizer.zero_grad()
 
-    x = Tensor(X)
-    y_onehot = np.eye(3)[y]  # (148, 3)
+    x = Tensor(X_train)
+
+    y_onehot = np.eye(3)[y_train]  
     target = Tensor(y_onehot)
 
     pred = model(x)
@@ -67,22 +96,19 @@ for epoch in range(EPOCHS):
     optimizer.step()
 
     if epoch % 100 == 0:
-        print(epoch, loss.data)
+        print(f'Epoch {epoch}, Loss: {loss.data}, Accuracy: {(np.argmax(pred.data, axis=1) == y_train).mean():.4f}')
 
 
 
-print("predictions:")
-print(model(Tensor(X)).data)
+logits_test = model(Tensor(X_test))
+preds_test = np.argmax(logits_test.data, axis=1)
 
-logits = model(Tensor(X))
-preds = np.argmax(logits.data, axis=1)
-
-accuracy = np.mean(preds == y)
-print(f"Accuracy: {accuracy:.4f}")
+accuracy = np.mean(preds_test == y_test)
+print(f"Test Accuracy: {accuracy:.4f}")
 
 
-plt.scatter(range(len(y)), y, label="True", alpha=0.6)
-plt.scatter(range(len(preds)), preds, label="Predicted", alpha=0.6)
+plt.scatter(range(len(y_test)), y_test, label="True", alpha=0.6)
+plt.scatter(range(len(preds_test)), preds_test, label="Predicted", alpha=0.6)
 plt.legend()
 plt.title("Predictions vs True Labels")
 plt.xlabel("Sample Index")
@@ -91,10 +117,10 @@ plt.show()
 
 
 
-cm = confusion_matrix(y, preds)
+cm = confusion_matrix(y_test, preds_test)
 
 sns.heatmap(cm, annot=True, fmt='d')
-plt.title("Confusion Matrix")
+plt.title("Confusion Matrix (Test Set)")
 plt.xlabel("Predicted")
 plt.ylabel("True")
 plt.show()
