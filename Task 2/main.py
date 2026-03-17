@@ -79,7 +79,7 @@ for epoch in range(EPOCHS):
 
     x = Tensor(X_train)
 
-    y_onehot = np.eye(3)[y_train]  
+    y_onehot = np.eye(classes)[y_train]  
     target = Tensor(y_onehot)
 
     pred = model(x)

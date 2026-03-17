@@ -55,11 +55,6 @@ class Linear(Module):
     def forward(self, x):
         return x @ self.W + (self.b if hasattr(self, 'b') else 0)
 
-
-class ReLU(Module):
-    def forward(self, x):
-        return x.relu()
-
 class Tanh(Module):
     def forward(self, x):
         return x.tanh()
