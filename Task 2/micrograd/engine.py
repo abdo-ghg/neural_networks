@@ -73,16 +73,6 @@ class Tensor:
 
         return out
 
-    def relu(self):
-        out = Tensor(np.maximum(0, self.data), (self,), "relu")
-
-        def _backward():
-            self.grad += (self.data > 0) * out.grad
-
-        if self.requires_grad:
-            out._backward = _backward
-        return out
-
     def tanh(self):
         out = Tensor(np.tanh(self.data), (self,), "tanh")
 

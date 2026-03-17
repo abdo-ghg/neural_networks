@@ -14,6 +14,12 @@ EPOCHS = 2000
 learning_rate = 0.01
 bias = True
 
+features = 5
+classes = 3
+tanh_hidden = True
+
+num_hidden_neurons = 4 * 16
+num_of_hidden_layers = 2
 
 losses = []
 
@@ -34,7 +40,7 @@ def preprocessing(df):
     return X, y
 
 
-def stratified_split(X, y):
+def split(X, y):
     X_train, y_train = [], []
     X_test, y_test = [], []
 
@@ -44,30 +50,24 @@ def stratified_split(X, y):
         X_cls = X[idx]
         y_cls = y[idx]
 
-        # first 30 train, next 20 test
         X_train.append(X_cls[:30])
         y_train.append(y_cls[:30])
 
         X_test.append(X_cls[30:50])
         y_test.append(y_cls[30:50])
 
-    return (
-        np.vstack(X_train),
-        np.hstack(y_train),
-        np.vstack(X_test),
-        np.hstack(y_test),
-    )
+    return (np.vstack(X_train), np.hstack(y_train), np.vstack(X_test), np.hstack(y_test),)
 
 X, y = preprocessing(df)
 
-X_train, y_train, X_test, y_test = stratified_split(X, y)
+X_train, y_train, X_test, y_test = split(X, y)
 
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 
-model = MLP(bias)
+model = MLP(bias, features, classes, tanh_hidden, num_of_hidden_layers, num_hidden_neurons)
 model.train()
 
 print(f'Number of parameters: {sum(p.data.size for p in model.parameters())}')
@@ -131,4 +131,3 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Curve')
 plt.show()
-
