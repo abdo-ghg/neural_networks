@@ -48,6 +48,7 @@ class Linear(Module):
         super().__init__()
 
         self.W = Tensor(np.random.randn(in_features, out_features) * np.sqrt(2/in_features), requires_grad=self.requires_grad)
+
         if bias:
             self.b = Tensor(np.random.randn(1, out_features) * 0.01, requires_grad=self.requires_grad)
 
@@ -66,9 +67,3 @@ class Tanh(Module):
 class Sigmoid(Module):
     def forward(self, x):
         return x.sigmoid()
-
-class softmax(Module):
-    def forward(self, x):
-        exps = np.exp(x.data - np.max(x.data, axis=1, keepdims=True))
-        out = Tensor(exps / np.sum(exps, axis=1, keepdims=True), (x,), "softmax")
-        return out

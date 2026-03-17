@@ -1,11 +1,13 @@
 import numpy as np
 
 def sum_to_shape(grad, shape):
+    # remove extra dimensions
     while len(grad.shape) > len(shape):
         grad = grad.sum(axis=0)
 
-    for i, dim in enumerate(shape):
-        if dim == 1:
+    # sum along broadcasted axes
+    for i in reversed(range(len(shape))):
+        if shape[i] == 1:
             grad = grad.sum(axis=i, keepdims=True)
 
     return grad
@@ -54,12 +56,17 @@ class Tensor:
 
         return out
 
+
     def __matmul__(self, other):
         out = Tensor(self.data @ other.data, (self, other), "matmul")
 
         def _backward():
-            self.grad += out.grad @ other.data.T
-            other.grad += self.data.T @ out.grad
+            # handle batched matmul
+            self_grad = out.grad @ other.data.T
+            other_grad = self.data.T @ out.grad
+
+            self.grad += sum_to_shape(self_grad, self.data.shape)
+            other.grad += sum_to_shape(other_grad, other.data.shape)
 
         if self.requires_grad or other.requires_grad:
             out._backward = _backward
@@ -72,7 +79,7 @@ class Tensor:
         def _backward():
             self.grad += (self.data > 0) * out.grad
 
-        if self.requires_grad or other.requires_grad:
+        if self.requires_grad:
             out._backward = _backward
         return out
 
@@ -82,7 +89,7 @@ class Tensor:
         def _backward():
             self.grad += (1 - np.tanh(self.data)**2) * out.grad
 
-        if self.requires_grad or other.requires_grad:
+        if self.requires_grad:
             out._backward = _backward
         return out
 
@@ -92,7 +99,7 @@ class Tensor:
         def _backward():
             self.grad += out.data * (1 - out.data) * out.grad
 
-        if self.requires_grad or other.requires_grad:
+        if self.requires_grad:
             out._backward = _backward
         return out
 
@@ -103,7 +110,7 @@ class Tensor:
         def _backward():
             self.grad += np.ones_like(self.data) * out.grad / self.data.size
 
-        if self.requires_grad or other.requires_grad:
+        if self.requires_grad:
             out._backward = _backward
         return out
 
@@ -123,23 +130,27 @@ class Tensor:
     def __rtruediv__(self, other): 
         return other * self**-1
 
-    def log(self): 
-        def _backward():
-            self.grad += (1/self.data) 
+    def log(self):
+        out = Tensor(np.log(self.data), (self,), "log")
 
-        if self.requires_grad or other.requires_grad:
+        def _backward():
+            self.grad += (1 / self.data) * out.grad
+
+        if self.requires_grad:
             out._backward = _backward
 
-        return Tensor(np.log(self.data), (self,), "log")
+        return out
         
-    def exp(self): 
-        def _backward():
-            self.grad += np.exp(self.data)
+    def exp(self):
+        out = Tensor(np.exp(self.data), (self,), "exp")
 
-        if self.requires_grad or other.requires_grad:
+        def _backward():
+            self.grad += out.data * out.grad
+
+        if self.requires_grad:
             out._backward = _backward
 
-        return Tensor(np.exp(self.data), (self,), "exp")
+        return out
 
     def __pow__(self, power):
         out = Tensor(self.data ** power, (self,), f"pow{power}")
@@ -147,7 +158,7 @@ class Tensor:
         def _backward():
             self.grad += power * (self.data ** (power - 1)) * out.grad
 
-        if self.requires_grad or other.requires_grad:
+        if self.requires_grad:
             out._backward = _backward
         return out
     
