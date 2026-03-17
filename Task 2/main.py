@@ -4,9 +4,7 @@ from model import MLP
 import micrograd.optim as optim
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import KNNImputer
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
@@ -85,11 +83,7 @@ for epoch in range(EPOCHS):
     target = Tensor(y_onehot)
 
     pred = model(x)
-
-
     loss = ((pred - target)**2).mean()
-
-
     losses.append(loss.data)
 
     loss.backward()
