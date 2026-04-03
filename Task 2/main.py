@@ -23,9 +23,6 @@ losses = []
 
 np.random.seed(37) # for reproducibility
 
-# dataset
-df = pd.read_csv('penguins.csv')
-
 def preprocessing(df):
     df['Species'] = df['Species'].map({'Adelie': 0, 'Chinstrap': 1, 'Gentoo': 2})
     df['OriginLocation'] = df['OriginLocation'].map({'Torgersen': 0, 'Biscoe': 1, 'Dream': 2})
@@ -56,72 +53,68 @@ def split(X, y):
 
     return (np.vstack(X_train), np.hstack(y_train), np.vstack(X_test), np.hstack(y_test),)
 
-X, y = preprocessing(df)
+if __name__ == '__main__':
+    # dataset
+    df = pd.read_csv('penguins.csv')
 
-X_train, y_train, X_test, y_test = split(X, y)
+    X, y = preprocessing(df)
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+    X_train, y_train, X_test, y_test = split(X, y)
 
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-model = MLP(bias, features, classes, tanh_hidden, num_of_hidden_layers, num_hidden_neurons)
-model.train()
+    model = MLP(bias, features, classes, tanh_hidden, num_of_hidden_layers, num_hidden_neurons)
+    model.train()
 
-print(f'Number of parameters: {sum(p.data.size for p in model.parameters())}')
+    print(f'Number of parameters: {sum(p.data.size for p in model.parameters())}')
 
-optimizer = optim.Gradient(model.parameters(), lr=learning_rate)
+    optimizer = optim.Gradient(model.parameters(), lr=learning_rate)
 
+    for epoch in range(EPOCHS):
 
-for epoch in range(EPOCHS):
+        optimizer.zero_grad()
 
-    optimizer.zero_grad()
+        x = Tensor(X_train)
 
-    x = Tensor(X_train)
+        y_onehot = np.eye(classes)[y_train]
+        target = Tensor(y_onehot)
 
-    y_onehot = np.eye(classes)[y_train]  
-    target = Tensor(y_onehot)
+        pred = model(x)
+        loss = ((pred - target)**2).mean()
+        losses.append(loss.data)
 
-    pred = model(x)
-    loss = ((pred - target)**2).mean()
-    losses.append(loss.data)
+        loss.backward()
+        optimizer.step()
 
-    loss.backward()
-    optimizer.step()
+        if epoch % 100 == 0:
+            print(f'Epoch {epoch}, Loss: {loss.data}, Accuracy: {(np.argmax(pred.data, axis=1) == y_train).mean():.4f}')
 
-    if epoch % 100 == 0:
-        print(f'Epoch {epoch}, Loss: {loss.data}, Accuracy: {(np.argmax(pred.data, axis=1) == y_train).mean():.4f}')
+    logits_test = model(Tensor(X_test))
+    preds_test = np.argmax(logits_test.data, axis=1)
 
+    accuracy = np.mean(preds_test == y_test)
+    print(f"Test Accuracy: {accuracy:.4f}")
 
+    plt.scatter(range(len(y_test)), y_test, label="True", alpha=0.6)
+    plt.scatter(range(len(preds_test)), preds_test, label="Predicted", alpha=0.6)
+    plt.legend()
+    plt.title("Predictions vs True Labels")
+    plt.xlabel("Sample Index")
+    plt.ylabel("Class")
+    plt.show()
 
-logits_test = model(Tensor(X_test))
-preds_test = np.argmax(logits_test.data, axis=1)
+    cm = confusion_matrix(y_test, preds_test)
 
-accuracy = np.mean(preds_test == y_test)
-print(f"Test Accuracy: {accuracy:.4f}")
+    sns.heatmap(cm, annot=True, fmt='d')
+    plt.title("Confusion Matrix (Test Set)")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.show()
 
-
-plt.scatter(range(len(y_test)), y_test, label="True", alpha=0.6)
-plt.scatter(range(len(preds_test)), preds_test, label="Predicted", alpha=0.6)
-plt.legend()
-plt.title("Predictions vs True Labels")
-plt.xlabel("Sample Index")
-plt.ylabel("Class")
-plt.show()
-
-
-
-cm = confusion_matrix(y_test, preds_test)
-
-sns.heatmap(cm, annot=True, fmt='d')
-plt.title("Confusion Matrix (Test Set)")
-plt.xlabel("Predicted")
-plt.ylabel("True")
-plt.show()
-
-
-plt.plot(losses)
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Loss Curve')
-plt.show()
+    plt.plot(losses)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Loss Curve')
+    plt.show()
