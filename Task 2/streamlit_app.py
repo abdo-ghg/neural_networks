@@ -12,75 +12,114 @@ from model import MLP
 import micrograd.optim as optim
 from main import preprocessing, split
 
-st.set_page_config(
-    page_title="MLP Backpropagation Dashboard",
-    page_icon="🧠",
-    layout="wide",
-)
+EPOCHS = 1000
+LEARNING_RATE = 0.01
+BIAS = True
 
-st.markdown(
-    """
-    <style>
-        .stApp {
-            background: linear-gradient(120deg, #0f1021 0%, #1a1b47 35%, #253b80 65%, #0c8f8f 100%);
-            color: #f8f9fa;
-        }
-        .main-card {
-            background: rgba(13, 18, 50, 0.72);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 1.2rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
-            margin-bottom: 1rem;
-        }
-        .stMetric {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
-            padding: 0.8rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .header-title {
-            font-size: 2.3rem;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 0.2rem;
-        }
-        .header-sub {
-            font-size: 1.05rem;
-            color: #d0d9ff;
-            margin-bottom: 1.2rem;
-        }
-        .stButton > button {
-            border-radius: 14px;
-            border: none;
-            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcB77, #4d96ff);
-            color: #10122b;
-            font-weight: 800;
-            padding: 0.6rem 1rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+FEATURES = 5
+CLASSES = 3
+TANH_HIDDEN = True
 
-st.markdown('<div class="header-title">🧠✨ MLP Backpropagation Studio</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="header-sub">Train, evaluate, and compare your Multi-Layer Perceptron runs with a colorful interactive UI.</div>',
-    unsafe_allow_html=True,
-)
+NUM_HIDDEN_NEURONS = 64
+NUM_OF_HIDDEN_LAYERS = 2
 
-if "history" not in st.session_state:
-    st.session_state.history = []
 
-with st.sidebar:
-    st.header("⚙️ Network Configuration")
+def setup_page():
+    st.set_page_config(
+        page_title="MLP Backpropagation Dashboard",
+        page_icon="🧠",
+        layout="wide",
+    )
 
-    hidden_layers = st.slider("Number of Hidden Layers", min_value=1, max_value=6, value=2)
-    neurons_text = st.text_input("Neurons per Layer (comma-separated)", value="64,64")
-    lr = st.number_input("Learning Rate (eta)", min_value=0.0001, max_value=1.0, value=0.01, step=0.0005, format="%.4f")
-    epochs = st.number_input("Number of Epochs (m)", min_value=10, max_value=20000, value=1000, step=10)
-    activation = st.selectbox("Activation Function", options=["Sigmoid", "Hyperbolic Tangent"], index=1)
-    use_bias = st.checkbox("Add Bias", value=True)
+    st.markdown(
+        """
+        <style>
+            .stApp {
+                background: linear-gradient(120deg, #0f1021 0%, #1a1b47 35%, #253b80 65%, #0c8f8f 100%);
+                color: #f8f9fa;
+            }
+            .main-card {
+                background: rgba(13, 18, 50, 0.72);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 20px;
+                padding: 1.2rem;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
+                margin-bottom: 1rem;
+            }
+            .stMetric {
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 18px;
+                padding: 0.8rem;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            .header-title {
+                font-size: 2.3rem;
+                font-weight: 800;
+                color: #ffffff;
+                margin-bottom: 0.2rem;
+            }
+            .header-sub {
+                font-size: 1.05rem;
+                color: #d0d9ff;
+                margin-bottom: 1.2rem;
+            }
+            .stButton > button {
+                border-radius: 14px;
+                border: none;
+                background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcB77, #4d96ff);
+                color: #10122b;
+                font-weight: 800;
+                padding: 0.6rem 1rem;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_header():
+    st.markdown('<div class="header-title">🧠✨ MLP Backpropagation Studio</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="header-sub">Train, evaluate, and compare your Multi-Layer Perceptron runs with a colorful interactive UI.</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def initialize_state():
+    if "history" not in st.session_state:
+        st.session_state.history = []
+
+
+def sidebar_config():
+    with st.sidebar:
+        st.header("⚙️ Network Configuration")
+
+        hidden_layers = st.slider("Number of Hidden Layers", min_value=1, max_value=6, value=NUM_OF_HIDDEN_LAYERS)
+        neurons_text = st.text_input("Neurons per Layer (comma-separated)", value=f"{NUM_HIDDEN_NEURONS},{NUM_HIDDEN_NEURONS}")
+        lr = st.number_input(
+            "Learning Rate (eta)",
+            min_value=0.0001,
+            max_value=1.0,
+            value=LEARNING_RATE,
+            step=0.0005,
+            format="%.4f",
+        )
+        epochs = st.number_input("Number of Epochs (m)", min_value=10, max_value=20000, value=EPOCHS, step=10)
+        activation = st.selectbox(
+            "Activation Function",
+            options=["Sigmoid", "Hyperbolic Tangent"],
+            index=1 if TANH_HIDDEN else 0,
+        )
+        use_bias = st.checkbox("Add Bias", value=BIAS)
+
+    return {
+        "hidden_layers": hidden_layers,
+        "neurons_text": neurons_text,
+        "lr": lr,
+        "epochs": epochs,
+        "activation": activation,
+        "use_bias": use_bias,
+    }
 
 
 def parse_neurons(neurons_raw, n_layers):
@@ -100,6 +139,8 @@ def parse_neurons(neurons_raw, n_layers):
 
 
 def train_pipeline(config):
+    np.random.seed(37)
+
     df = pd.read_csv("penguins.csv")
     X, y = preprocessing(df)
     X_train, y_train, X_test, y_test = split(X, y)
@@ -110,8 +151,8 @@ def train_pipeline(config):
 
     model = MLP(
         bias=config["use_bias"],
-        features=5,
-        classes=3,
+        features=FEATURES,
+        classes=CLASSES,
         tanh_hidden=config["tanh_hidden"],
         num_of_hidden_layers=config["hidden_layers"],
         num_hidden_neurons=config["neurons_per_layer"][0],
@@ -127,7 +168,7 @@ def train_pipeline(config):
         optimizer.zero_grad()
 
         x = Tensor(X_train)
-        y_onehot = np.eye(3)[y_train]
+        y_onehot = np.eye(CLASSES)[y_train]
         target = Tensor(y_onehot)
 
         pred = model(x)
@@ -166,53 +207,7 @@ def train_pipeline(config):
     }
 
 
-st.markdown('<div class="main-card">', unsafe_allow_html=True)
-st.subheader("🚀 Training Section")
-start_training = st.button("Start Training", use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-run_result = None
-if start_training:
-    neurons_per_layer, parse_error = parse_neurons(neurons_text, hidden_layers)
-    if parse_error:
-        st.error(parse_error)
-    else:
-        if len(set(neurons_per_layer)) > 1:
-            st.info(
-                "Current backend MLP uses one hidden width value. "
-                "This run will apply the first value to all hidden layers."
-            )
-        config = {
-            "hidden_layers": hidden_layers,
-            "neurons_per_layer": neurons_per_layer,
-            "learning_rate": float(lr),
-            "epochs": int(epochs),
-            "tanh_hidden": activation == "Hyperbolic Tangent",
-            "use_bias": use_bias,
-            "activation_name": activation,
-        }
-
-        with st.spinner("🔮 Initializing model and running backpropagation..."):
-            run_result = train_pipeline(config)
-
-        st.session_state.last_run = run_result
-        st.session_state.history.append(
-            {
-                "Activation": activation,
-                "Hidden Layers": hidden_layers,
-                "Neurons": ",".join(map(str, neurons_per_layer)),
-                "Learning Rate": float(lr),
-                "Epochs": int(epochs),
-                "Bias": use_bias,
-                "Train Accuracy": round(run_result["train_acc"], 4),
-                "Test Accuracy": round(run_result["test_acc"], 4),
-            }
-        )
-
-if "last_run" in st.session_state:
-    run_result = st.session_state.last_run
-
-if run_result is not None:
+def render_results(run_result):
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.subheader("📊 Results")
 
@@ -252,6 +247,8 @@ if run_result is not None:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+
+def render_prediction(run_result):
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.subheader("🕊️ Classification (Single Sample)")
     st.caption("Enter 5 values in this order: BillLength, BillDepth, FlipperLength, BodyMass, OriginLocation")
@@ -277,11 +274,80 @@ if run_result is not None:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="main-card">', unsafe_allow_html=True)
-st.subheader("📚 Experiment Summary Table")
-if len(st.session_state.history) > 0:
-    history_df = pd.DataFrame(st.session_state.history)
-    st.dataframe(history_df, use_container_width=True)
-else:
-    st.info("No runs yet. Train at least one model to populate this summary table.")
-st.markdown('</div>', unsafe_allow_html=True)
+
+def render_history_table():
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+    st.subheader("📚 Experiment Summary Table")
+    if len(st.session_state.history) > 0:
+        history_df = pd.DataFrame(st.session_state.history)
+        st.dataframe(history_df, use_container_width=True)
+    else:
+        st.info("No runs yet. Train at least one model to populate this summary table.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def main():
+    np.random.seed(37)
+
+    setup_page()
+    render_header()
+    initialize_state()
+
+    ui_config = sidebar_config()
+
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+    st.subheader("🚀 Training Section")
+    start_training = st.button("Start Training", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    run_result = None
+    if start_training:
+        neurons_per_layer, parse_error = parse_neurons(ui_config["neurons_text"], ui_config["hidden_layers"])
+        if parse_error:
+            st.error(parse_error)
+        else:
+            if len(set(neurons_per_layer)) > 1:
+                st.info(
+                    "Current backend MLP uses one hidden width value. "
+                    "This run will apply the first value to all hidden layers."
+                )
+
+            config = {
+                "hidden_layers": ui_config["hidden_layers"],
+                "neurons_per_layer": neurons_per_layer,
+                "learning_rate": float(ui_config["lr"]),
+                "epochs": int(ui_config["epochs"]),
+                "tanh_hidden": ui_config["activation"] == "Hyperbolic Tangent",
+                "use_bias": ui_config["use_bias"],
+                "activation_name": ui_config["activation"],
+            }
+
+            with st.spinner("🔮 Initializing model and running backpropagation..."):
+                run_result = train_pipeline(config)
+
+            st.session_state.last_run = run_result
+            st.session_state.history.append(
+                {
+                    "Activation": ui_config["activation"],
+                    "Hidden Layers": ui_config["hidden_layers"],
+                    "Neurons": ",".join(map(str, neurons_per_layer)),
+                    "Learning Rate": float(ui_config["lr"]),
+                    "Epochs": int(ui_config["epochs"]),
+                    "Bias": ui_config["use_bias"],
+                    "Train Accuracy": round(run_result["train_acc"], 4),
+                    "Test Accuracy": round(run_result["test_acc"], 4),
+                }
+            )
+
+    if "last_run" in st.session_state:
+        run_result = st.session_state.last_run
+
+    if run_result is not None:
+        render_results(run_result)
+        render_prediction(run_result)
+
+    render_history_table()
+
+
+if __name__ == "__main__":
+    main()
