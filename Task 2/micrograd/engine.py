@@ -23,7 +23,6 @@ class Tensor:
         self._prev = set(_children)
         self._op = _op
 
-    # -------- basic ops --------
 
     def __add__(self, other):
 
@@ -61,7 +60,6 @@ class Tensor:
         out = Tensor(self.data @ other.data, (self, other), "matmul")
 
         def _backward():
-            # handle batched matmul
             self_grad = out.grad @ other.data.T
             other_grad = self.data.T @ out.grad
 
@@ -152,7 +150,6 @@ class Tensor:
             out._backward = _backward
         return out
     
-    # -------- backward -------- DFS through the computational graph (topological sort) --------
 
     def backward(self):
 

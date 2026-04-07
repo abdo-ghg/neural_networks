@@ -287,7 +287,6 @@ def render_history_table():
 
 
 def main():
-    np.random.seed(37)
 
     setup_page()
     render_header()
