@@ -10,7 +10,6 @@ warnings.filterwarnings("ignore")
 import streamlit as st
 
 df = pd.read_csv('penguins.csv')
-                  #[1, 2, ...]        ['Adelie', ...]
 def preprocessing(features_selected, classes_selected):
     new_df = df[df['Species'].isin(classes_selected)][['Species'] + [df.columns[i] for i in features_selected]]
 
@@ -31,9 +30,7 @@ def preprocessing(features_selected, classes_selected):
 
     y = np.where(y == classes_selected[0], 1, -1)
     return X, y
-#X, y = preprocessing([1, 4], ['Adelie', 'Gentoo'])
-#print(X)
-#print(y)
+  
 def custom_train_test_split(X, y):
     class_1 = np.random.permutation(np.where(y == 1)[0])
     class_2 = np.random.permutation(np.where(y == -1)[0])
@@ -44,10 +41,6 @@ def custom_train_test_split(X, y):
     y_train = y[train_idx]
     y_test = y[test_idx]
     return X_train, X_test, y_train, y_test
-#X, y = preprocessing([1, 4], ['Adelie', 'Gentoo'])
-#X_train, X_test, y_train, y_test = custom_train_test_split(X, y)
-#print(len(X_train), len(X_test), len(y_train), len(y_test))
-#print(X_train, X_test, y_train, y_test)
 
 def SLP_train(X_train, y_train, epochs, learning_rate, X0):
   w0 = np.random.rand()
@@ -96,7 +89,6 @@ def SLP_test(X_test, y_test, X0, w0, w1, w2):
   return accuracy, precision, recall, F1, conf_mat
 
 
-# ===== Test Case =====
 
 def ADA_train(X_train, y_train, epochs, learning_rate, X0, mse):
   w0 = np.random.rand()
@@ -148,44 +140,3 @@ def ADA_test(X_test, y_test, X0, w0, w1, w2):
   conf_mat = [[TP, FP],
               [FN, TN]]
   return accuracy, precision, recall, F1, conf_mat
-
-def visualize(X, y, w0, w1, w2, X0):
-
-    plt.figure(figsize=(7,5))
-    plt.scatter(X[:,0], X[:,1], c=y, cmap='bwr', edgecolors='k')
-
-    x1 = (-w0 * X0) / w1
-    x2 = (-w0 * X0) / w2
-    
-    plt.plot([x1, 0], [0, x2], color = 'black', label = 'Decision Boundary')
-
-    #might remove these two lines based on how the graph look
-    #plt.scatter(x1, 0, color = 'black')
-    # plt.scatter(0, x2, color = 'black')
-
-    plt.xlabel("Feature 1 (X1)")
-    plt.ylabel("Feature 2 (X2)")
-    plt.title("Perceptron Decision Boundary")
-    plt.legend()
-    plt.show()
-
-    preds = np.where((w1*X[:,0] + w2*X[:,1] + w0*X0) >= 0, 1, -1)
-    plot_accuracy = np.mean(preds == y)
-    print("Accuracy calculated from plot side:", plot_accuracy)
-
-if __name__ == "__main__":
-    # choose 2 numeric features indices and 2 classes from the CSV
-    X, y = preprocessing([1,4], ['Adelie','Gentoo'])      # <-- choose indices that produce exactly 2 numeric features
-    X_train, X_test, y_train, y_test = custom_train_test_split(X, y)
-    print("Training samples:", len(X_train))
-    print("Testing samples :", len(X_test))
-    w0, w1, w2 = SLP_train(X_train, y_train, epochs=100, learning_rate=0.01, X0=1.0)
-    accuracy, precision, recall, F1, conf_mat = SLP_test(X_test, y_test, 1.0, w0, w1, w2)
-    print("\nEvaluation on test set:")
-    print("Accuracy :", accuracy)
-    print("Precision:", precision)
-    print("Recall   :", recall)
-    print("F1 Score :", F1)
-    print("Confusion matrix:", conf_mat)
-    # verify accuracy visually (this prints the plot accuracy and shows the plot)
-    visualize(X_test, y_test, w0, w1, w2,1)

@@ -3,40 +3,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# Import backend functions from SLP_ADALINE
 import SLP_ADALINE as backend
 
-# ========================
-# Page Configuration
-# ========================
+
 st.set_page_config(page_title="Perceptron & Adaline Classifier", layout="wide")
 
-# ========================
-# Title
-# ========================
+
 st.title("Perceptron & Adaline Classifier Visualization")
 
-# ========================
-# Load feature and class options from the dataset
-# ========================
+
 df = pd.read_csv('penguins.csv')
 feature_columns = df.columns.tolist()
-feature_columns.remove('Species')  # Remove target column
+feature_columns.remove('Species')  
 available_classes = df['Species'].unique().tolist()
 
-# Create feature options with index for selection
 feature_options = {col: idx + 1 for idx, col in enumerate(feature_columns)}  # +1 because Species is at index 0
 
-# ========================
-# Model Parameters
-# ========================
+
 st.header("Model Parameters")
 
-# Create columns for better layout
 col_left, col_right = st.columns(2)
 
 with col_left:
-    # Feature Selection
     st.subheader("Feature Selection")
     selected_features = st.multiselect(
         "Select Two Features",
@@ -46,7 +34,6 @@ with col_left:
         help="Select exactly two features for training"
     )
 
-    # Class Selection
     st.subheader("Class Selection")
     selected_classes = st.multiselect(
         "Select Two Classes",
@@ -57,7 +44,6 @@ with col_left:
     )
 
 with col_right:
-    # Hyperparameters
     st.subheader("Hyperparameters")
     learning_rate = st.number_input(
         "Learning Rate (eta)",
@@ -85,10 +71,8 @@ with col_right:
         format="%.4f"
     )
 
-    # Bias Option
     add_bias = st.checkbox("Add Bias", value=True)
 
-    # Algorithm Selection
     algorithm = st.radio(
         "Select Algorithm",
         options=["Perceptron", "Adaline"],
@@ -96,12 +80,9 @@ with col_right:
         horizontal=True
     )
 
-# ========================
-# Validation
-# ========================
+
 st.divider()
 
-# Validate inputs
 valid_input = True
 if len(selected_features) != 2:
     st.warning("⚠️ Please select exactly two features.")
@@ -111,59 +92,43 @@ if len(selected_classes) != 2:
     st.warning("⚠️ Please select exactly two classes.")
     valid_input = False
 
-# ========================
-# Train Button
-# ========================
+
 train_button = st.button("🚀 Train Model", disabled=not valid_input, use_container_width=True)
 
-# ========================
-# Main Content Area
-# ========================
+
 if train_button and valid_input:
-    # Get feature indices
     feature_indices = [feature_options[f] for f in selected_features]
     
-    # Set bias value
     X0 = 1.0 if add_bias else 0.0
     
     with st.spinner("Training model..."):
         try:
-            # Preprocessing
             X, y = backend.preprocessing(feature_indices, selected_classes)
             
-            # Train-Test Split
             X_train, X_test, y_train, y_test = backend.custom_train_test_split(X, y)
             
-            # Train the selected model
             if algorithm == "Perceptron":
                 w0, w1, w2 = backend.SLP_train(X_train, y_train, epochs, learning_rate, X0)
                 accuracy, precision, recall, F1, conf_mat = backend.SLP_test(X_test, y_test, X0, w0, w1, w2)
-            else:  # Adaline
+            else:  
                 w0, w1, w2 = backend.ADA_train(X_train, y_train, epochs, learning_rate, X0, mse_threshold)
                 accuracy, precision, recall, F1, conf_mat = backend.ADA_test(X_test, y_test, X0, w0, w1, w2)
             
             st.success("✅ Training Complete!")
             
-            # ========================
-            # After Training Section
-            # ========================
+
             st.header("After Training")
             
-            # Create two columns for layout
             col1, col2 = st.columns([2, 1])
             
             with col1:
-                # ========================
-                # Decision Boundary Plot
-                # ========================
+
                 st.subheader("Decision Boundary Plot")
                 
                 fig, ax = plt.subplots(figsize=(7, 5))
                 
-                # Scatter plot (same as visualize function - using cmap='bwr')
                 scatter = ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap='bwr', edgecolors='k')
                 
-                # Decision boundary (same as visualize function)
                 x_vals = np.linspace(X_test[:, 0].min(), X_test[:, 0].max(), 100)
                 y_vals = -(w1/w2) * x_vals - (w0/w2)
                 ax.plot(x_vals, y_vals, color='black', label='Decision Boundary')
@@ -176,18 +141,15 @@ if train_button and valid_input:
                 st.pyplot(fig)
                 plt.close()
                 
-                # Calculate and display plot accuracy (same as visualize function)
                 preds = np.where((w1 * X_test[:, 0] + w2 * X_test[:, 1] + w0) >= 0, 1, -1)
                 plot_accuracy = np.mean(preds == y_test)
                 st.write(f"**Accuracy calculated from plot side:** {plot_accuracy:.4f}")
             
             with col2:
-                # ========================
-                # Confusion Matrix
-                # ========================
+
                 st.subheader("Confusion Matrix")
                 
-                # Create DataFrame for confusion matrix
+
                 conf_df = pd.DataFrame(
                     conf_mat,
                     columns=[f"Predicted {selected_classes[0]}", f"Predicted {selected_classes[1]}"],
@@ -195,9 +157,7 @@ if train_button and valid_input:
                 )
                 st.table(conf_df)
                 
-                # ========================
-                # Performance Metrics
-                # ========================
+ 
                 st.subheader("Performance Metrics")
                 
                 metrics_df = pd.DataFrame({
@@ -206,17 +166,12 @@ if train_button and valid_input:
                 })
                 st.table(metrics_df)
                 
-                # ========================
-                # Model Weights
-                # ========================
+
                 st.subheader("Learned Weights")
                 st.write(f"**w0 (bias):** {w0:.4f}")
                 st.write(f"**w1:** {w1:.4f}")
                 st.write(f"**w2:** {w2:.4f}")
             
-            # ========================
-            # Training Information
-            # ========================
             st.divider()
             st.subheader("Training Information")
             info_col1, info_col2, info_col3 = st.columns(3)
@@ -233,14 +188,11 @@ if train_button and valid_input:
             st.exception(e)
 
 else:
-    # Display instructions when no training has been done
     st.info("� Configure the model parameters above and click **Train Model** to begin.")
     
-    # Show dataset preview
     st.subheader("Dataset Preview")
     st.dataframe(df.head(10), use_container_width=True)
     
-    # Show available options
     col1, col2 = st.columns(2)
     
     with col1:
