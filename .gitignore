@@ -92,3 +92,43 @@ temp/
 
 # Streamlit cache
 .streamlit/
+Emotion detection/ai/Claude-Reading photo pixels for emotion detection.md
+Emotion detection/ai/Claude-استخدام 6 فئات من بيانات fer+ بدون test data.md
+Emotion detection/ai/ml_audit_checklist.html
+Emotion detection/avg_bbox (2).json
+Emotion detection/FERPlus-master/FERPlus-master/FER+vsFER.png
+Emotion detection/FERPlus-master/FERPlus-master/fer2013new.csv
+Emotion detection/FERPlus-master/FERPlus-master/LICENSE.md
+Emotion detection/FERPlus-master/FERPlus-master/README.md
+Emotion detection/FERPlus-master/FERPlus-master/SECURITY.md
+Emotion detection/FERPlus-master/FERPlus-master/src/ferplus.py
+Emotion detection/FERPlus-master/FERPlus-master/src/generate_training_data.py
+Emotion detection/FERPlus-master/FERPlus-master/src/img_util.py
+Emotion detection/FERPlus-master/FERPlus-master/src/models.py
+Emotion detection/FERPlus-master/FERPlus-master/src/rect_util.py
+Emotion detection/FERPlus-master/FERPlus-master/src/train.py
+Emotion detection/george-05.ipynb
+Emotion detection/george-07.ipynb
+Emotion detection/mobilevit_vgg_hybrid.ipynb
+Emotion detection/project.zip
+Emotion detection/project/project/convnext_notebook.ipynb
+Emotion detection/project/project/data_01.py
+Emotion detection/project/project/ddp.py
+Emotion detection/project/project/ensemble.py
+Emotion detection/project/project/face_bbox.py
+Emotion detection/project/project/model_config.py
+Emotion detection/project/project/pseudo_label.py
+Emotion detection/project/project/utils.py
+Emotion detection/project/project/vit.py
+Emotion detection/project/project/vit_notebook.ipynb
+Emotion detection/submission (29).csv
+Emotion detection/submission.csv
+Emotion detection/submission1.csv
+Emotion detection/submission_vgg.csv
+Emotion detection/vgg-updated.ipynb
+Emotion detection/vgg/vgg-updated.ipynb
+Emotion detection/vgg1.csv
+Emotion detection/vgg_updated.csv
+Emotion detection/vgg0.csv
+Emotion detection/vgg/vgg-updated.ipynb
+Emotion detection/vgg/vgg-updated.ipynb
