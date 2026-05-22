@@ -1,0 +1,19 @@
+# Core libraries used by Emotion detection notebooks
+numpy>=1.24
+pandas>=2.0
+scikit-learn>=1.2
+matplotlib>=3.6
+seaborn>=0.13
+
+# PyTorch + ecosystem (choose proper wheel for CUDA on your machine)
+torch>=2.2.0
+torchvision>=0.15.2
+timm>=0.9.0
+
+# Optional / TF-based notebooks
+tensorflow>=2.13.0
+
+# Utilities
+opencv-python>=4.7.0
+Pillow>=9.5.0
+tqdm>=4.65
